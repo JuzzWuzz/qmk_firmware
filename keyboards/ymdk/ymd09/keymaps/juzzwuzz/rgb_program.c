@@ -7,31 +7,56 @@ static uint16_t g_held_alt_tab;
 
 #ifdef RGB_MATRIX_CUSTOM_USER
 
-static float g_dt;
+// Constant variables
+const point_t g_keyboard_center = { 112, 32 };
+
+// Animation variables
 static uint32_t g_render_timer;
+static float g_dt;
+static float g_cos;
+static float g_sin;
+static float g_effect_offset;
+
+float thing(float dt) {
+	if (dt < 0.0f) {
+		dt = fabs(dt);
+		dt = 1.0f - (dt - (int)dt);
+	} else if (dt >= 1.0f) {
+		dt = dt - (int)dt;
+	}
+
+	return dt;
+}
+
+// Init Animation
+void init_animation(void) {
+	g_render_timer	= timer_read32();
+	g_dt			= 0.0f;
+	g_cos			= cos(g_animations[g_animation_index]->effect_angle);
+	g_sin			= sin(g_animations[g_animation_index]->effect_angle);
+	g_effect_offset	= g_animations[g_animation_index]->effects_per_board / MATRIX_COLS;
+}
 
 // This is the renderer from the custom effect we added
 void render_effect(uint8_t led_min, uint8_t led_max, effect_params_t* params) {
 	if (params->init) {
-		g_dt = 0.0;
-		g_render_timer = timer_read32();
+		init_animation();
 	}
 
-	// Calculated new dt
-	float dt = timer_elapsed32(g_render_timer) / g_animations[g_animation_index]->effect_time;
+	// Update global dt value
+	g_dt = fmod(g_dt + (timer_elapsed32(g_render_timer) / g_animations[g_animation_index]->effect_time), 1.0);
 	g_render_timer = timer_read32();
-	g_dt = fmod(g_dt+dt, 1.0);
 
 	// Do the effect calculations
-	for (uint8_t column = 0; column < MATRIX_COLS; column++) {
-		float time = fmod(g_dt + ((MATRIX_COLS - column) * (g_animations[g_animation_index]->effects_per_board / MATRIX_COLS)), 1.0);
-		RGB rgb = get_rgb_scaled_to_brightness(get_rgb_for_effect_and_time(g_animations[g_animation_index]->effects, time), g_brightness[g_brightness_index]);
-		for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-			uint8_t led_index = g_led_config.matrix_co[row][column];
-			if (led_index != NO_LED) {
-				rgb_matrix_set_color(led_index, rgb.r, rgb.g, rgb.b);
-			}
-		}
+	for (uint8_t i = led_min; i < led_max; i++) {
+		int16_t dx  = (g_led_config.point[i].x - g_keyboard_center.x) / g_keyboard_center.x;
+		int16_t dy  = (g_led_config.point[i].y - g_keyboard_center.y) / g_keyboard_center.y;
+
+		float dt = thing(g_dt + (g_effect_offset * (dx * g_cos - dy * g_sin)));
+
+		RGB rgb = get_rgb_scaled_to_brightness(get_rgb_for_effect_and_time(g_animations[g_animation_index]->effects, dt), g_brightness[g_brightness_index]);
+
+		rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
 	}
 }
 
@@ -52,8 +77,6 @@ void suspend_wakeup_init_user(void) {
 
 // Fired once all keyboard init functions have been completed
 void keyboard_post_init_user(void) {
-	debug_enable = true;
-
 	g_held_alt_tab = 0;
 }
 
@@ -66,7 +89,7 @@ void matrix_init_user(void) {
 
 // Runs constantly in the background (looping)
 void matrix_scan_user(void) {
-	if (g_held_alt_tab != 0 && timer_elapsed(g_held_alt_tab) > 1000) {
+	if (g_held_alt_tab != 0 && timer_elapsed(g_held_alt_tab) > 500) {
 		unregister_code(KC_LALT);
 		g_held_alt_tab = 0;
 	}
@@ -127,24 +150,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 		// ??? Keys
 		case RGB_J1:
 			if (record->event.pressed) {
-				xprintf("\n");
-				eeconfig_debug_rgb_matrix();
-				xprintf("g_animation_index: %d\n", g_animation_index);
-				xprintf("g_animation_count: %d\n", g_animation_count);
-				xprintf("\n");
+				g_dt = 0.0;
 			}
 			return false;
 		case RGB_J2:
 			if (record->event.pressed) {
-				g_dt = 0.0;
-				xprintf("Resetting effect\n");
+				g_animation_index = (g_animation_index + 1) % g_animation_count;
+				init_animation();
 			}
 			return false;
 		case RGB_J3:
 			if (record->event.pressed) {
-				g_dt = 0.0;
-				g_animation_index = (g_animation_index + 1) % g_animation_count;
-				xprintf("Program: %d/%d\n", g_animation_index + 1, g_animation_count);
 			}
 			return false;
 		default:

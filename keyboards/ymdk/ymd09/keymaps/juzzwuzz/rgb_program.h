@@ -4,8 +4,9 @@
 
 // iCue
 animation_config animation_icue = {
-	.effect_time		= 2000.0,
-	.effects_per_board	= 1.0 / MATRIX_COLS,
+	.effect_time		= 2000.0,						// 2s per effect
+	.effects_per_board	= 1.0 / 3.0,					// 1/3 of the total animation shown
+	.effect_angle		= (M_PI / 180.0) * (180 + 45),	// 45 degrees converted to radians
 	.effects = {
 		{ .es = 0.00, .ee = 0.11, .hs = 300.00, .he = 293.88, .ss =  74.90, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true },
 		{ .es = 0.11, .ee = 0.22, .hs = 293.88, .he = 284.94, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true },
@@ -20,8 +21,9 @@ animation_config animation_icue = {
 };
 // Juzz 1
 animation_config animation_juzz1 = {
-	.effect_time		= 2000.0,
-	.effects_per_board	= 1.0 / MATRIX_COLS,
+	.effect_time		= 2000.0,						// 2s per effect
+	.effects_per_board	= 1.0 / 3.0,					// 1/3 of the total animation shown
+	.effect_angle		= (M_PI / 180.0) * (180 + 45),	// 45 degrees converted to radians
 	.effects = {
 		{ .es = 0.00, .ee = 0.90, .hs = 350.00, .he = 100.00, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true },
 		{ .es = 0.90, .ee = 1.00, .hs = 100.00, .he = 350.00, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih = false },
@@ -30,8 +32,9 @@ animation_config animation_juzz1 = {
 };
 // Juzz 2
 animation_config animation_juzz2 = {
-	.effect_time		= 2000.0,
-	.effects_per_board	= 1.0 / MATRIX_COLS,
+	.effect_time		= 2000.0,						// 2s per effect
+	.effects_per_board	= 1.0 / 3.0,					// 1/3 of the total animation shown
+	.effect_angle		= (M_PI / 180.0) * (180 + 45),	// 45 degrees converted to radians
 	.effects = {
 		{ .es = 0.00, .ee = 1.00, .hs = 360.00, .he =   0.00, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true },
 		{ .ex = 1 }

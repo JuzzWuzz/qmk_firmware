@@ -1,6 +1,7 @@
 #pragma once
 
 #include QMK_KEYBOARD_H
+#include <math.h>
 #include "print.h"
 #include "quantum.h"
 
@@ -48,9 +49,10 @@ typedef struct effect_config {
 } effect_config;
 
 typedef struct animation_config {
-	float 			effect_time;
-	float			effects_per_board;
-	effect_config	effects[];
+	float			effect_time;		// Time to complete the animation
+	float			effects_per_board;	// Number of times full animation shown
+	float			effect_angle;		// The angle to offset the animation
+	effect_config	effects[];			// Array of effects
 
 } animation_config;
 
