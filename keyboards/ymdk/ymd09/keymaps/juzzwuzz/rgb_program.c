@@ -1,7 +1,28 @@
 #include "rgb_program.h"
 
+
+// Memory
+static uint8_t g_animation_index = 0;
+static uint8_t g_brightness_index = g_brightness_count - 1;
+
+// Layer contorls
+static effect_config *g_layer_effect;
+
 // Key controls
 static uint16_t g_held_alt_tab;
+
+// Sleep controls
+static bool g_suspended;
+
+
+// Private function definitions
+void init_animation(void);
+void set_layer_color(void);
+
+
+// ----------------------------------------
+// Animation Stuff
+// ----------------------------------------
 
 
 
@@ -16,17 +37,6 @@ static float g_dt;
 static float g_cos;
 static float g_sin;
 static float g_effect_offset;
-
-float thing(float dt) {
-	if (dt < 0.0f) {
-		dt = fabs(dt);
-		dt = 1.0f - (dt - (int)dt);
-	} else if (dt >= 1.0f) {
-		dt = dt - (int)dt;
-	}
-
-	return dt;
-}
 
 // Init Animation
 void init_animation(void) {
@@ -43,16 +53,21 @@ void render_effect(uint8_t led_min, uint8_t led_max, effect_params_t* params) {
 		init_animation();
 	}
 
+	// Bail if suspended or showing layer specific colors
+	if (g_suspended || g_layer_effect != NULL) {
+		return;
+	}
+
 	// Update global dt value
-	g_dt = fmod(g_dt + (timer_elapsed32(g_render_timer) / g_animations[g_animation_index]->effect_time), 1.0);
+	g_dt = fmod(g_dt + (timer_elapsed32(g_render_timer) / g_animations[g_animation_index]->effect_time), 1.0f);
 	g_render_timer = timer_read32();
 
 	// Do the effect calculations
 	for (uint8_t i = led_min; i < led_max; i++) {
-		int16_t dx  = (g_led_config.point[i].x - g_keyboard_center.x) / g_keyboard_center.x;
-		int16_t dy  = (g_led_config.point[i].y - g_keyboard_center.y) / g_keyboard_center.y;
+		float dx  = (g_led_config.point[i].x - g_keyboard_center.x) / g_keyboard_center.x;
+		float dy  = (g_led_config.point[i].y - g_keyboard_center.y) / g_keyboard_center.y;
 
-		float dt = thing(g_dt + (g_effect_offset * (dx * g_cos - dy * g_sin)));
+		float dt = wrap_float(g_dt + (g_effect_offset * (dx * g_cos - dy * g_sin)), 0.0f, 1.0f);
 
 		RGB rgb = get_rgb_scaled_to_brightness(get_rgb_for_effect_and_time(g_animations[g_animation_index]->effects, dt), g_brightness[g_brightness_index]);
 
@@ -60,75 +75,157 @@ void render_effect(uint8_t led_min, uint8_t led_max, effect_params_t* params) {
 	}
 }
 
-#endif
+#else
+
+void init_animation(void) { }
+
+#endif // RGB_MATRIX_CUSTOM_USER
 
 
 
-// Triggered when the system is powered down
-void suspend_power_down_user(void) {
-	rgb_matrix_driver.set_color_all(0, 0, 0);
-	rgb_matrix_driver.flush();
-}
+// ----------------------------------------
+// Keyboard Functions - Init
+// ----------------------------------------
 
-// Triggered when the system is resumed from standby
-void suspend_wakeup_init_user(void) {
-	rgb_matrix_enable_noeeprom();
-}
+
 
 // Fired once all keyboard init functions have been completed
+// @Override
 void keyboard_post_init_user(void) {
+	g_layer_effect = NULL;
 	g_held_alt_tab = 0;
+	g_suspended	= false;
 }
 
 // Fired at the end of the Matrix init function
+// @Override
 void matrix_init_user(void) {
 #ifdef RGB_MATRIX_CUSTOM_USER
 	rgb_matrix_mode(RGB_MATRIX_CUSTOM_JUZZ_WUZZ);
 #endif
 }
 
+
+
+// ----------------------------------------
+// Keyboard Functions - Sleep
+// ----------------------------------------
+
+
+
+// Triggered when the system is powered down
+// @Override
+void suspend_power_down_user(void) {
+	g_suspended	= true;
+	rgb_matrix_disable_noeeprom();
+	rgb_matrix_driver.set_color_all(0, 0, 0);
+	rgb_matrix_driver.flush();
+}
+
+// Triggered when the system is resumed from standby
+// @Override
+void suspend_wakeup_init_user(void) {
+	g_suspended	= false;
+	rgb_matrix_enable_noeeprom();
+}
+
+
+
+// ----------------------------------------
+// Keyboard Functions - Looping
+// ----------------------------------------
+
+
+
+
 // Runs constantly in the background (looping)
+// @Override
 void matrix_scan_user(void) {
-	if (g_held_alt_tab != 0 && timer_elapsed(g_held_alt_tab) > 500) {
+	// Check for Super Alt-Tab key
+	if (g_held_alt_tab != 0 && timer_elapsed(g_held_alt_tab) > 750) {
 		unregister_code(KC_LALT);
 		g_held_alt_tab = 0;
 	}
 }
 
+
+
+// ----------------------------------------
+// Keyboard Functions - Layer Control
+// ----------------------------------------
+
+
+
 // Do things when switching between layers
+// @Override
 layer_state_t layer_state_set_user(layer_state_t state) {
 	switch (get_highest_layer(state)) {
-	case 0:
-		break;
-	case 1:
-		break;
-	case 2:
-		break;
+		case LYR_BASE:
+			g_layer_effect = NULL;
+			// Back to base so reset the timer
+			//g_render_timer = timer_read32();
+			break;
+		case LYR_RGB:
+			g_layer_effect = layer_rgb;
+			break;
+		case LYR_VLC:
+			g_layer_effect = layer_vlc;
+			break;
+		case LYR_FREE:
+			g_layer_effect = layer_free;
+			break;
 	}
+
+	set_layer_color();
+
 	return state;
 }
 
+// Set Layer Color
+void set_layer_color(void) {
+	if (g_layer_effect != NULL) {
+		for (uint8_t i = 0; i < DRIVER_LED_TOTAL; i++) {
+			float dx = ((float)(g_led_config.point[i].x - g_keyboard_center.x) / g_keyboard_center.x) / 2.0f + 0.5f;
+
+			RGB rgb = get_rgb_scaled_to_brightness(get_rgb_for_effect_and_time(g_layer_effect, dx), g_brightness[g_brightness_index]);
+
+			rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+		}
+	}
+}
+
+
+
+// ----------------------------------------
+// Keyboard Functions - Key Processing
+// ----------------------------------------
+
+
+
 // Process user keystrokes
+// @Override
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-	static uint32_t key_timer;
+	static uint16_t key_timer;
 
 	switch (keycode) {
 		// RGB Keys
 		case RGB_BRI_I:
 			if (record->event.pressed) {
 				g_brightness_index = MIN(g_brightness_index + 1, g_brightness_count - 1);
+				set_layer_color();
 			}
 			return false;
 		case RGB_BRI_D:
 			if (record->event.pressed) {
 				g_brightness_index = MAX(g_brightness_index - 1, 0);
+				set_layer_color();
 			}
 			return false;
 		case RESET:
 			if (record->event.pressed) {
-				key_timer = timer_read32();
+				key_timer = timer_read();
 			} else {
-				if (timer_elapsed32(key_timer) >= 500) {
+				if (timer_elapsed(key_timer) >= 500) {
 					reset_keyboard();
 				}
 			}
