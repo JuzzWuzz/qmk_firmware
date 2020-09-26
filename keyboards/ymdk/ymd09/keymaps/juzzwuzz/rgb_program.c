@@ -2,8 +2,17 @@
 
 
 // Memory
-static uint8_t g_animation_index = 0;
-static uint8_t g_brightness_index = g_brightness_count - 1;
+// typedef union {
+//	uint32_t raw;
+//	struct {
+//		bool     rgb_layer_change :1;
+//	};
+// } user_config_t;
+
+// user_config_t user_config;
+static bool g_enabled;
+static uint8_t g_animation_index;
+static uint8_t g_brightness_index;
 
 // Layer contorls
 static effect_config *g_layer_effect;
@@ -53,7 +62,7 @@ void render_effect(uint8_t led_min, uint8_t led_max, effect_params_t* params) {
 		init_animation();
 	}
 
-	// Bail if suspended or showing layer specific colors
+	// Bail if disabled, suspended or showing layer specific colors
 	if (g_suspended || g_layer_effect != NULL) {
 		return;
 	}
@@ -89,12 +98,30 @@ void init_animation(void) { }
 
 
 
+// Load from memory
+void memory_load(void) {
+	// Read the user config from EEPROM
+	user_config.raw = eeconfig_read_user();
+
+	g_enabled = true;
+	g_animation_index = 0;
+	g_brightness_index = g_brightness_count - 1;
+}
+
+// Save to memory
+void memory_save(void) {
+
+}
+
 // Fired once all keyboard init functions have been completed
 // @Override
 void keyboard_post_init_user(void) {
 	g_layer_effect = NULL;
 	g_held_alt_tab = 0;
 	g_suspended	= false;
+
+	// Load data from memory
+	memory_load();
 }
 
 // Fired at the end of the Matrix init function
@@ -183,7 +210,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 // Set Layer Color
 void set_layer_color(void) {
-	if (g_layer_effect != NULL) {
+	if (g_enabled && g_layer_effect != NULL) {
 		for (uint8_t i = 0; i < DRIVER_LED_TOTAL; i++) {
 			float dx = ((float)(g_led_config.point[i].x - g_keyboard_center.x) / g_keyboard_center.x) / 2.0f + 0.5f;
 
@@ -211,13 +238,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 		// RGB Keys
 		case RGB_BRI_I:
 			if (record->event.pressed) {
-				g_brightness_index = MIN(g_brightness_index + 1, g_brightness_count - 1);
-				set_layer_color();
+				if (g_enabled) {
+					g_brightness_index = MIN(g_brightness_index + 1, g_brightness_count - 1);
+					set_layer_color();
+				}
 			}
 			return false;
 		case RGB_BRI_D:
 			if (record->event.pressed) {
-				g_brightness_index = MAX(g_brightness_index - 1, 0);
+				if (g_enabled) {
+					g_brightness_index = MAX(g_brightness_index - 1, 0);
+					set_layer_color();
+				}
+			}
+			return false;
+		case RGB_TOG:
+			if (record->event.pressed) {
+				rgblight_toggle();
 				set_layer_color();
 			}
 			return false;

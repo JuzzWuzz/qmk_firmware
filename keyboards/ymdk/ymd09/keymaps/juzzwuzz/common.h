@@ -28,6 +28,8 @@ enum my_layer_names {
 	LYR_BASE,
     LYR_RGB,
     LYR_VLC,
+    LYR_MAP,
+    LYR_OBS,
     LYR_FREE
 };
 
