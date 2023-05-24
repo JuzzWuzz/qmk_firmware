@@ -1,3 +1,25 @@
+/*
+  Copyright (c) 2020 Fred Silberberg
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
 #include QMK_KEYBOARD_H
 
 typedef enum {
@@ -47,7 +69,7 @@ void dance_cycle(bool override_timer) {
   }
 }
 
-void dance_finished(qk_tap_dance_state_t *state, void* user_data) {
+void dance_finished(tap_dance_state_t *state, void* user_data) {
   // Determine the current state
   switch (state->count)
   {
@@ -79,7 +101,7 @@ void dance_finished(qk_tap_dance_state_t *state, void* user_data) {
     case SINGLE_TAP:
     {
       // VS Build: CTRL+SHIFT+B
-      send_string_with_delay_P(PSTR(SS_DOWN(X_LCTRL) SS_DOWN(X_LSHIFT) "b" SS_UP(X_LSHIFT) SS_UP(X_LCTRL)), 10);
+      send_string_with_delay_P(PSTR(SS_DOWN(X_LCTL) SS_DOWN(X_LSFT) "b" SS_UP(X_LSFT) SS_UP(X_LCTL)), 10);
       tap_dance_active = false;
       break;
     }
@@ -105,12 +127,12 @@ void dance_finished(qk_tap_dance_state_t *state, void* user_data) {
   }
 }
 
-void dance_reset(qk_tap_dance_state_t *state, void* user_data)
+void dance_reset(tap_dance_state_t *state, void* user_data)
 {
   tap_dance_active = false;
 }
 
-qk_tap_dance_action_t tap_dance_actions[] = {
+tap_dance_action_t tap_dance_actions[] = {
   [TD_KEY] = ACTION_TAP_DANCE_FN_ADVANCED (NULL, dance_finished, dance_reset)
 };
 
