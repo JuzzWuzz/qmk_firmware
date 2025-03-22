@@ -15,7 +15,9 @@
 #define RGB_MATRIX_HUE_STEP 1
 #define RGB_MATRIX_SAT_STEP 1
 #define RGB_MATRIX_VAL_STEP 1
-#define RGB_DISABLE_WHEN_USB_SUSPENDED true					// Switch off lights on suspend
+#ifndef RGB_DISABLE_WHEN_USB_SUSPENDED
+#	define RGB_DISABLE_WHEN_USB_SUSPENDED// true					// Switch off lights on suspend
+#endif
 #define RGB_MATRIX_LED_FLUSH_LIMIT 10						// Update frequency (ms). This is basically 100fps
 #define RGB_MATRIX_LED_PROCESS_LIMIT DRIVER_LED_TOTAL		// Number of LEDs to update per animation step
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS 255					// Max brightness

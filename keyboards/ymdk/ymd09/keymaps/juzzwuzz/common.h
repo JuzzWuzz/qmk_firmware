@@ -42,6 +42,12 @@ enum my_keycodes {
 	ALT_TAB
 };
 
+typedef struct RGB {
+	float r;
+	float g;
+	float b;
+} RGB;
+
 typedef struct HSB {
 	float h;
 	float s;

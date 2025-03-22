@@ -2,14 +2,14 @@
 
 
 // Memory
-// typedef union {
-//	uint32_t raw;
-//	struct {
-//		bool     rgb_layer_change :1;
-//	};
-// } user_config_t;
+typedef union {
+	uint32_t raw;
+	struct {
+		bool     rgb_layer_change :1;
+	};
+} user_config_t;
 
-// user_config_t user_config;
+user_config_t user_config;
 static bool g_enabled;
 static uint8_t g_animation_index;
 static uint8_t g_brightness_index;
