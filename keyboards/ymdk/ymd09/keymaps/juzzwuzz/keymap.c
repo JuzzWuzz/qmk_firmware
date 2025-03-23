@@ -1,0 +1,43 @@
+#include "common.h"
+
+
+// VLC Hotkeys
+#define VLC_PLY MEH(KC_F1)
+#define VLC_NXT MEH(KC_F2)
+#define VLC_PRV MEH(KC_F3)
+#define VLC_STP MEH(KC_F4)
+#define VLC_SBJ MEH(KC_F5)
+#define VLC_SFJ MEH(KC_F6)
+
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+	[LYR_BASE] = LAYOUT(
+		MO(LYR_RGB),	KC_MUTE,	KC_MPLY,
+		MO(LYR_MAP),	KC_VOLD,	KC_VOLU,
+		MO(LYR_VLC),	ALT_TAB,	KC_F13
+	),
+	[LYR_RGB] = LAYOUT(
+		KC_TRNS,	RGB_BRI_D,	RGB_BRI_I,
+		RGB_J1,		RGB_J2,		RGB_TOG,
+		RESET,		KC_NO,		KC_NO
+	),
+	[LYR_MAP] = LAYOUT(
+		DF(LYR_OBS),	KC_NO,		KC_NO,
+		KC_TRNS,		KC_NO,		KC_NO,
+		KC_NO,			KC_NO,		KC_NO
+	),
+	[LYR_VLC] = LAYOUT(
+		VLC_PRV,	VLC_PLY,	VLC_NXT,
+		VLC_SBJ,	VLC_STP,	VLC_SFJ,
+		KC_TRNS,	KC_NO,		KC_NO
+	),
+	[LYR_OBS] = LAYOUT(
+		DF(LYR_BASE),	KC_NO,		KC_NO,
+		KC_NO,			KC_NO,		KC_NO,
+		KC_NO,			KC_NO,		KC_NO
+	),
+	[LYR_FREE] = LAYOUT(
+		DF(LYR_BASE),	KC_NO,		KC_NO,
+		KC_NO,			KC_NO,		KC_NO,
+		KC_NO,			KC_NO,		KC_NO
+	)
+};
