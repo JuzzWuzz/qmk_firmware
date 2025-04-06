@@ -8,24 +8,32 @@
 // ----------------------------------------
 
 // # Handle default macro initialisation
-#ifndef ANIMATION_TIME
-#   define ANIMATION_TIME ANIMATION_TIME_DEFAULT
+#ifndef EFFECT_TIME
+#   define EFFECT_TIME EFFECT_TIME_DEFAULT
 #endif
-#ifndef ANIMATION_EFFECTS_PER_BOARD
-#   define ANIMATION_EFFECTS_PER_BOARD ANIMATION_EFFECTS_PER_BOARD_DEFAULT
+#ifndef EFFECT_TILING_COUNT
+#   define EFFECT_TILING_COUNT EFFECT_TILING_COUNT_DEFAULT
 #endif
-#ifndef ANIMATION_ANGLE
-#   define ANIMATION_ANGLE ANIMATION_ANGLE_DEFAULT
+#ifndef EFFECT_TILING_FRACTIONAL
+#  define EFFECT_TILING_FRACTIONAL EFFECT_TILING_FRACTIONAL_DEFAULT
+#endif
+#ifndef EFFECT_ANGLE
+#   define EFFECT_ANGLE EFFECT_ANGLE_DEFAULT
+#endif
+#ifndef ALLOW_EFFECT_ROTATION
+#   define ALLOW_EFFECT_ROTATION ALLOW_EFFECT_ROTATION_DEFAULT
 #endif
 
-const led_point_t   c_rgb_matrix_center     = RGB_MATRIX_CENTER;
-const uint8_t       c_minimum_brightness    = 10;
-const uint8_t       c_rgb_matrix_cols       = MATRIX_COLS;
-const uint8_t       c_rgb_matrix_led_count  = RGB_MATRIX_LED_COUNT;
+const led_point_t   c_rgb_matrix_center             = RGB_MATRIX_CENTER;
+const uint8_t       c_minimum_brightness            = 10;
+const uint8_t       c_rgb_matrix_led_count          = RGB_MATRIX_LED_COUNT;
 
-const uint16_t      c_animation_time        = ANIMATION_TIME;
-const double        c_effects_per_board     = ANIMATION_EFFECTS_PER_BOARD;
-const uint8_t       c_effect_angle          = (ANIMATION_ANGLE * 255) / 360;
+const uint16_t      c_effect_time                   = EFFECT_TIME;
+const uint8_t       c_effect_tiling_count           = EFFECT_TILING_COUNT;
+const bool          c_effect_tiling_fractional      = EFFECT_TILING_FRACTIONAL;
+const uint8_t       c_effect_angles_count           = EFFECT_ANGLES_COUNT;
+const bool          c_allow_effect_rotation         = ALLOW_EFFECT_ROTATION;
+const double        c_cos_sin_value                 = 0.7071067812; // cos(45 degrees) = sin(45 degrees) = 0.7071067812
 
 
 // ----------------------------------------
@@ -34,18 +42,17 @@ const uint8_t       c_effect_angle          = (ANIMATION_ANGLE * 255) / 360;
 
 
 // --------------------
-// Animation controls
+// Animation Controls
 
-bool                g_enabled               = false;
-int8_t              g_cos                   = 0;
-int8_t              g_sin                   = 0;
-double              g_effect_offset         = 0.0;
-bool                g_pause                 = false;
+bool                g_enabled                       = false;
+uint8_t             g_effect_angle                  = EFFECT_ANGLE;
+uint8_t             g_max_dx                        = 0;
+uint8_t             g_max_dy                        = 0;
 
 // --------------------
 // Timers
-uint32_t            g_timer                 = 0;
-uint8_t             g_dt                    = 0;
+uint32_t            g_timer                         = 0;
+uint16_t            g_dt                            = 0;
 
 
 // --------------------
@@ -79,9 +86,9 @@ effect_t effect_juzz1 = {
     { .ex = 1 }
 };
 effect_t effect_juzz2 = {
-    { .es = 0,   .ee = 84,  .hs = 0,   .he = 0,   .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true },
-    { .es = 84,  .ee = 168, .hs = 167, .he = 167, .ss = 200, .se = 200, .bs = 255, .be = 255, .ih =  true },
-    { .es = 168, .ee = 255, .hs = 78,  .he = 78,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true },
+    { .es = 0,   .ee = 84,  .hs = 0,   .he = 0,   .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // Red
+    { .es = 84,  .ee = 168, .hs = 85,  .he = 85,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // Green
+    { .es = 168, .ee = 255, .hs = 170, .he = 170, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // Blue
     { .ex = 1 }
 };
 effect_t *g_effects[] = {
@@ -95,20 +102,14 @@ uint8_t g_effect_index = 0;
 
 
 // --------------------
-// Layers
+// Layer Colours
 
-// effect_step_t layer_rgb[] = {
-// 	{ .es = 0.00, .ee = 1.00, .hs =   0.00, .he = 240.00, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true },
-// 	{ .ex = 1 }
-// };
-// effect_step_t layer_vlc[] = {
-// 	{ .es = 0.00, .ee = 1.00, .hs =  11.29, .he =  11.29, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true },
-// 	{ .ex = 1 }
-// };
-// effect_step_t layer_free[] = {
-// 	{ .es = 0.00, .ee = 1.00, .hs = 352.47, .he =  18.82, .ss = 100.00, .se = 100.00, .bs = 100.00, .be = 100.00, .ih =  true, .iv =  true },
-// 	{ .ex = 1 }
-// };
+effect_step_t layer_rgb[] = {
+    { .es = 0,   .ee = 84,  .hs = 0,   .he = 0,   .ss = 255, .se = 255, .bs = 128, .be = 255, .ih =  true }, // Red
+    { .es = 84,  .ee = 168, .hs = 85,  .he = 85,  .ss = 255, .se = 255, .bs = 128, .be = 255, .ih =  true }, // Green
+    { .es = 168, .ee = 255, .hs = 170, .he = 170, .ss = 255, .se = 255, .bs = 128, .be = 255, .ih =  true }, // Blue
+	{ .ex = 1 }
+};
 effect_step_t *g_layer_effect = NULL;
 
 
@@ -122,7 +123,7 @@ rgb_t get_rgb_for_effect_and_time(const effect_step_t *effect, uint8_t time) {
 		effect_step_t cur = effect[i];
 
 		if (time >= cur.es && time <= cur.ee) {
-            fract8 t256 = scale8(255, (time - cur.es) * 255 / (cur.ee - cur.es));
+            fract8 t256 = scale8(UINT8_MAX, (time - cur.es) * UINT8_MAX / (cur.ee - cur.es));
 
 			hsv_t bgn = { cur.hs, cur.ss, cur.bs };
 			hsv_t end = { cur.he, cur.se, cur.be };
@@ -169,16 +170,15 @@ rgb_t get_rgb_for_effect_and_time(const effect_step_t *effect, uint8_t time) {
 }
 
 void init_animation(void) {
-    g_dt            = 0;
-    g_cos           = cos8(c_effect_angle) - 128;
-    g_sin           = sin8(c_effect_angle) - 128;
-    g_effect_offset = c_effects_per_board / c_rgb_matrix_cols;
+    g_dt = 0;
 }
 
 void set_layer_color(void) {
     if (g_enabled && g_layer_effect != NULL) {
         for (uint8_t i = 0; i < c_rgb_matrix_led_count; i++) {
-            float dx = ((float)(g_led_config.point[i].x - c_rgb_matrix_center.x) / c_rgb_matrix_center.x) / 2.0f + 0.5f;
+            // float dx = ((float)(g_led_config.point[i].x - c_rgb_matrix_center.x) / c_rgb_matrix_center.x) / 2.0f + 0.5f;
+            // uint8_t dx = scale8(g_led_config.point[i].x, g_max_dx);
+            uint8_t dx = g_led_config.point[i].x * UINT8_MAX / g_max_dx;
 
             rgb_t rgb = get_rgb_for_effect_and_time(g_layer_effect, dx);
 
@@ -197,18 +197,53 @@ void render_effect(uint8_t led_min, uint8_t led_max, effect_params_t* params) {
         return;
     }
 
-    if (!g_pause) {
-        g_dt = g_dt + scale16by8(sync_timer_elapsed32(g_timer), scale8(rgb_matrix_config.speed, 32)) + 1;
-    }
+    // Calculate the speed scaled to a uint16_t
+    uint16_t speed = scale16by8(UINT16_MAX,rgb_matrix_config.speed);
+    // The time to add is scaled to the speed divided by the animation time
+    g_dt += sync_timer_elapsed32(g_timer) * speed / c_effect_time;
     g_timer = sync_timer_read32();
 
     // Do the effect calculations
     for (uint8_t i = led_min; i < led_max; i++) {
-        // Calculate the offset for the current LED
+        // Calculate the offset for the current LED, applying the rotation if necessary
         int8_t dx = g_led_config.point[i].x - c_rgb_matrix_center.x;
         int8_t dy = g_led_config.point[i].y - c_rgb_matrix_center.y;
-        int8_t offset = (dx * g_cos + dy * g_sin) >> 7;
-        uint8_t dt = g_dt + offset;
+        int8_t offset = 0;
+        switch (g_effect_angle) {
+            case EFFECT_DIRECTION_N:
+                offset = dy;
+                break;
+            case EFFECT_DIRECTION_NE:
+                offset = -dx * c_cos_sin_value + dy * c_cos_sin_value;
+                break;
+            case EFFECT_DIRECTION_E:
+                offset = -dx;
+                break;
+            case EFFECT_DIRECTION_SE:
+                offset = -dx * c_cos_sin_value - dy * c_cos_sin_value;
+                break;
+            case EFFECT_DIRECTION_S:
+                offset = -dy;
+                break;
+            case EFFECT_DIRECTION_SW:
+                offset = dx * c_cos_sin_value - dy * c_cos_sin_value;
+                break;
+            case EFFECT_DIRECTION_W:
+                offset = dx;
+                break;
+            case EFFECT_DIRECTION_NW:
+                offset = dx * c_cos_sin_value + dy * c_cos_sin_value;
+                break;
+        }
+
+        // Account for any tiling
+        if (c_effect_tiling_fractional) {
+            offset /= c_effect_tiling_count;
+        } else {
+            offset *= c_effect_tiling_count;
+        }
+
+        uint8_t dt = (g_dt / UINT8_MAX) + offset;
 
         rgb_t rgb = get_rgb_for_effect_and_time((*g_effects[g_effect_index]), dt);
 
@@ -226,6 +261,7 @@ void render_effect(uint8_t led_min, uint8_t led_max, effect_params_t* params) {
 typedef union {
     uint32_t raw;
     struct {
+        uint8_t effect_angle :8;
         uint8_t effect_index :8;
     };
 } user_config_t;
@@ -235,8 +271,14 @@ user_config_t user_config;
 // @Override
 void eeconfig_init_user(void) {  // EEPROM is getting reset!
     user_config.raw = 0;
-    user_config.effect_index = 0; // Set default effect index to 0
+    user_config.effect_angle = EFFECT_ANGLE;
+    user_config.effect_index = 0;
     eeconfig_update_user(user_config.raw); // Write default value to EEPROM now
+}
+
+// Save the user config to EEPROM
+void eeconfig_save(void) {
+    eeconfig_update_user(user_config.raw);
 }
 
 // Fired once all keyboard init functions have been completed
@@ -245,6 +287,14 @@ void keyboard_post_init_user(void) {
     // Read the user config from EEPROM
     user_config.raw = eeconfig_read_user();
 
+    // Loop over LEDs to get boundaries
+    for (uint8_t i = 0; i < c_rgb_matrix_led_count; i++) {
+        g_max_dx = MAX(g_max_dx, g_led_config.point[i].x);
+        g_max_dy = MAX(g_max_dy, g_led_config.point[i].y);
+    }
+
+    // Set the global properties
+	g_effect_angle = user_config.effect_angle;
 	g_effect_index = user_config.effect_index;
 	g_layer_effect = NULL;
     g_enabled = true;
@@ -261,14 +311,26 @@ void keyboard_post_init_user(void) {
 
 
 // Set the RGB effect index and save it to EEPROM
-void set_rgb_effect(uint8_t effect_index) {
+void set_effect_index(uint8_t effect_index) {
     // Set the effect index and save it to EEPROM
     g_effect_index = effect_index;
     user_config.effect_index = effect_index;
-    eeconfig_update_user(user_config.raw);
+    eeconfig_save();
 
     // Init the animation
     init_animation();
+}
+
+void set_effect_angle(uint8_t effect_angle) {
+    if (c_allow_effect_rotation) {
+        // Set the effect angle and save it to EEPROM
+        g_effect_angle = effect_angle;
+        user_config.effect_angle = effect_angle;
+        eeconfig_save();
+
+        // Init the animation
+        init_animation();
+    }
 }
 
 // Process user keystrokes
@@ -276,26 +338,47 @@ void set_rgb_effect(uint8_t effect_index) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
-            case KC_JUZZ_PREV:
-                // Decrement g_effect_index and wrap around if it goes below 0
-                set_rgb_effect(submod8(g_effect_index, 1, g_effect_count));
+            case J_EFF_P:
+                // Decrement g_effect_index and wrap around if necessary
+                set_effect_index(submod8(g_effect_index, 1, g_effect_count));
                 return false;
 
-            case KC_JUZZ_NEXT:
-                // Increment g_effect_index and wrap around if it exceeds g_effect_count - 1
-                set_rgb_effect(addmod8(g_effect_index, 1, g_effect_count));
+            case J_EFF_N:
+                // Increment g_effect_index and wrap around if necessary
+                set_effect_index(addmod8(g_effect_index, 1, g_effect_count));
+                return false;
+
+            case J_ROT_D:
+                // Decrement g_effect_angle and wrap around if necessary
+                set_effect_angle(submod8(g_effect_angle, 1, c_effect_angles_count));
+                return false;
+
+            case J_ROT_I:
+                // Increment g_effect_angle and wrap around if necessary
+                set_effect_angle(addmod8(g_effect_angle, 1, c_effect_angles_count));
+                return false;
+
+            case J_RESET:
+                // Reset the eeprom data and reload the default values
+                eeconfig_init_user();
+
+                // Reintialise the keyboard
+                keyboard_post_init_user();
+
+                // Reset the brightness
+                rgb_matrix_sethsv(rgb_matrix_config.hsv.h, rgb_matrix_config.hsv.s, UINT8_MAX);
+
+                // Reinitialise the animation
+                init_animation();
                 return false;
 
             case RGB_J1:
-                g_effect_index = 0;
                 return false;
 
             case RGB_J2:
-                g_effect_index = 1;
                 return false;
 
             case RGB_J3:
-                g_pause = !g_pause;
                 return false;
         }
     }
@@ -313,14 +396,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 layer_state_t layer_state_set_user(layer_state_t state) {
 	switch (get_highest_layer(state)) {
 		case 0:
-			// g_layer_effect = NULL;
+			g_layer_effect = NULL;
 			break;
 		case 1:
-			// g_layer_effect = layer_rgb;
+			g_layer_effect = layer_rgb;
 			break;
 	}
 
-	// set_layer_color();
+	set_layer_color();
 
 	return state;
 }

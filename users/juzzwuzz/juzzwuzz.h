@@ -1,14 +1,28 @@
 #pragma once
 
-#include QMK_KEYBOARD_H
 #include <stdint.h>
 #include <stdbool.h>
 #include "quantum.h"
 
 
+enum effect_angles {
+    EFFECT_DIRECTION_N = 0,
+    EFFECT_DIRECTION_NE,
+    EFFECT_DIRECTION_E,
+    EFFECT_DIRECTION_SE,
+    EFFECT_DIRECTION_S,
+    EFFECT_DIRECTION_SW,
+    EFFECT_DIRECTION_W,
+    EFFECT_DIRECTION_NW,
+    EFFECT_ANGLES_COUNT
+};
+
 enum my_keycodes {
-    KC_JUZZ_PREV = QK_KB_0,
-    KC_JUZZ_NEXT,
+    J_EFF_P = QK_KB_0,
+    J_EFF_N,
+    J_ROT_D,
+    J_ROT_I,
+    J_RESET,
     RGB_J1,
     RGB_J2,
     RGB_J3

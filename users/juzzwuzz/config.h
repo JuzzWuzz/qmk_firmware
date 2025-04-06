@@ -5,9 +5,11 @@
 // Keyboard specific configuration (Defaults)
 // Define versions without the _DEFAULT suffix to override
 
-#define ANIMATION_TIME_DEFAULT 2000                         // 2s per effect
-#define ANIMATION_EFFECTS_PER_BOARD_DEFAULT 1.0f / 3.0f     // 1/3 of the total animation shown
-#define ANIMATION_ANGLE_DEFAULT 45                          // 45 degrees
+#define EFFECT_TIME_DEFAULT 2000                            // 2s per effect
+#define EFFECT_TILING_COUNT_DEFAULT 1                       // Number of times the effect is visible over the board
+#define EFFECT_TILING_FRACTIONAL_DEFAULT false              // Show the effect as a fraction of the board
+#define EFFECT_ANGLE_DEFAULT EFFECT_DIRECTION_E             // Left to right
+#define ALLOW_EFFECT_ROTATION_DEFAULT false                 // If the effect can be rotated by key inputs
 
 
 // --------------------
