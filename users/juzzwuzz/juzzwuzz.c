@@ -37,6 +37,14 @@ const double        c_cos_sin_value                 = 0.7071067812; // cos(45 de
 
 
 // ----------------------------------------
+// Externs
+// ----------------------------------------
+
+
+effect_step_t *g_layer_effect = NULL;
+
+
+// ----------------------------------------
 // Effect Definitions
 // ----------------------------------------
 
@@ -56,61 +64,35 @@ uint16_t            g_dt                            = 0;
 
 
 // --------------------
-// Effects
+// Effects: Base versions should none be provided by a keyboard directly
 
-effect_t effect_icue = {
-    { .es = 0,   .ee = 28,  .hs = 212, .he = 208, .ss = 191, .se = 255, .bs = 255, .be = 255, .ih =  true }, // FF40FF -> E500FF
-    { .es = 28,  .ee = 56,  .hs = 208, .he = 202, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // E500FF -> BF00FF
-    { .es = 56,  .ee = 84,  .hs = 202, .he = 180, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // BF00FF -> 4000FF
-    { .es = 84,  .ee = 140, .hs = 180, .he = 159, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // 4000FF -> 0040FF
-    { .es = 140, .ee = 168, .hs = 159, .he = 106, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = false }, // 0040FF -> 00FF80
-    { .es = 168, .ee = 196, .hs = 106, .he = 95,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // 00FF80 -> 00FF40
-    { .es = 196, .ee = 224, .hs = 95,  .he = 85,  .ss = 255, .se = 191, .bs = 255, .be = 255, .ih =  true }, // 00FF40 -> 40FF40
-    { .es = 224, .ee = 255, .hs = 85,  .he = 212, .ss = 191, .se = 191, .bs = 255, .be = 255, .ih = false }, // 40FF40 -> FF40FF
+effect_t effect_base_icue = {
+    { .es = 0,   .ee = 28,  .hs = 212, .he = 208, .ss = 191, .se = 255, .bs = 255, .be = 255, .ih = true },  // #FF40FF -> #E500FF
+    { .es = 28,  .ee = 56,  .hs = 208, .he = 202, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = true },  // #E500FF -> #BF00FF
+    { .es = 56,  .ee = 84,  .hs = 202, .he = 180, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = true },  // #BF00FF -> #4000FF
+    { .es = 84,  .ee = 120, .hs = 180, .he = 159, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = true },  // #4000FF -> #0040FF
+    { .es = 120, .ee = 156, .hs = 159, .he = 106, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = true },  // #0040FF -> #00FF80
+    { .es = 156, .ee = 184, .hs = 106, .he = 95,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = true },  // #00FF80 -> #00FF40
+    { .es = 184, .ee = 212, .hs = 95,  .he = 85,  .ss = 255, .se = 191, .bs = 255, .be = 255, .ih = true },  // #00FF40 -> #40FF40
+    { .es = 212, .ee = 234, .hs = 85,  .he = 170, .ss = 191, .se = 200, .bs = 255, .be = 255, .ih = true },  // #40FF40 -> #3838FF
+    { .es = 234, .ee = 255, .hs = 170, .he = 212, .ss = 200, .se = 191, .bs = 255, .be = 255, .ih = true },  // #3838FF -> #FF40FF
     { .ex = 1 }
 };
-effect_t effect_icue2 = {
-    { .es = 0,   .ee = 28,  .hs = 212, .he = 208, .ss = 191, .se = 255, .bs = 255, .be = 255, .ih =  true }, // FF40FF -> E500FF
-    { .es = 28,  .ee = 56,  .hs = 208, .he = 202, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // E500FF -> BF00FF
-    { .es = 56,  .ee = 84,  .hs = 202, .he = 180, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // BF00FF -> 4000FF
-    { .es = 84,  .ee = 140, .hs = 180, .he = 159, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // 4000FF -> 0040FF
-    { .es = 140, .ee = 168, .hs = 159, .he = 106, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // 0040FF -> 00FF80
-    { .es = 168, .ee = 196, .hs = 106, .he = 95,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // 00FF80 -> 00FF40
-    { .es = 196, .ee = 224, .hs = 95,  .he = 85,  .ss = 255, .se = 191, .bs = 255, .be = 255, .ih =  true }, // 00FF40 -> 40FF40
-    { .es = 224, .ee = 255, .hs = 85,  .he = 212, .ss = 191, .se = 191, .bs = 255, .be = 255, .ih =  true }, // 40FF40 -> FF40FF
-    { .ex = 1 }
-};
-effect_t effect_juzz1 = {
-    { .es = 0,   .ee = 230, .hs = 248, .he = 71,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true },
-    { .es = 230, .ee = 255, .hs = 71,  .he = 248, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih = false },
-    { .ex = 1 }
-};
-effect_t effect_juzz2 = {
+effect_t effect_base_rgb = {
     { .es = 0,   .ee = 84,  .hs = 0,   .he = 0,   .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // Red
     { .es = 84,  .ee = 168, .hs = 85,  .he = 85,  .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // Green
     { .es = 168, .ee = 255, .hs = 170, .he = 170, .ss = 255, .se = 255, .bs = 255, .be = 255, .ih =  true }, // Blue
     { .ex = 1 }
 };
-effect_t *g_effects[] = {
-    &effect_icue,
-    &effect_icue2,
-    &effect_juzz1,
-    &effect_juzz2
+effect_t *g_base_effects[] = {
+    &effect_base_icue,
+    &effect_base_rgb
 };
-const uint8_t g_effect_count = sizeof(g_effects) / sizeof(*g_effects);
+
+// Handling extern and defining base effects as default case
+__attribute__((weak)) effect_t **g_effects = g_base_effects;
+__attribute__((weak)) uint8_t g_effect_count = ARRAY_COUNT(g_base_effects);
 uint8_t g_effect_index = 0;
-
-
-// --------------------
-// Layer Colours
-
-effect_step_t layer_rgb[] = {
-    { .es = 0,   .ee = 84,  .hs = 0,   .he = 0,   .ss = 255, .se = 255, .bs = 128, .be = 255, .ih =  true }, // Red
-    { .es = 84,  .ee = 168, .hs = 85,  .he = 85,  .ss = 255, .se = 255, .bs = 128, .be = 255, .ih =  true }, // Green
-    { .es = 168, .ee = 255, .hs = 170, .he = 170, .ss = 255, .se = 255, .bs = 128, .be = 255, .ih =  true }, // Blue
-	{ .ex = 1 }
-};
-effect_step_t *g_layer_effect = NULL;
 
 
 // ----------------------------------------
@@ -176,8 +158,6 @@ void init_animation(void) {
 void set_layer_color(void) {
     if (g_enabled && g_layer_effect != NULL) {
         for (uint8_t i = 0; i < c_rgb_matrix_led_count; i++) {
-            // float dx = ((float)(g_led_config.point[i].x - c_rgb_matrix_center.x) / c_rgb_matrix_center.x) / 2.0f + 0.5f;
-            // uint8_t dx = scale8(g_led_config.point[i].x, g_max_dx);
             uint8_t dx = g_led_config.point[i].x * UINT8_MAX / g_max_dx;
 
             rgb_t rgb = get_rgb_for_effect_and_time(g_layer_effect, dx);
@@ -333,29 +313,39 @@ void set_effect_angle(uint8_t effect_angle) {
     }
 }
 
+// Handling base functionality that indicates no processing handled at a base level
+__attribute__((weak)) bool process_keycode_juzz(uint16_t keycode) {
+    return false;
+}
+
 // Process user keystrokes
 // @Override
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
+        // Process keycodes in keyboard overrides
+        if (process_keycode_juzz(keycode)) {
+            return false;
+        }
+
         switch (keycode) {
             case J_EFF_P:
                 // Decrement g_effect_index and wrap around if necessary
-                set_effect_index(submod8(g_effect_index, 1, g_effect_count));
+                set_effect_index(DECREMENT_WRAP(g_effect_index,g_effect_count));
                 return false;
 
             case J_EFF_N:
                 // Increment g_effect_index and wrap around if necessary
-                set_effect_index(addmod8(g_effect_index, 1, g_effect_count));
+                set_effect_index(INCREMENT_WRAP(g_effect_index, g_effect_count));
                 return false;
 
             case J_ROT_D:
                 // Decrement g_effect_angle and wrap around if necessary
-                set_effect_angle(submod8(g_effect_angle, 1, c_effect_angles_count));
+                set_effect_angle(DECREMENT_WRAP(g_effect_angle, c_effect_angles_count));
                 return false;
 
             case J_ROT_I:
                 // Increment g_effect_angle and wrap around if necessary
-                set_effect_angle(addmod8(g_effect_angle, 1, c_effect_angles_count));
+                set_effect_angle(INCREMENT_WRAP(g_effect_angle, c_effect_angles_count));
                 return false;
 
             case J_RESET:
@@ -383,27 +373,4 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
     }
     return true;
-}
-
-
-// ----------------------------------------
-// Keyboard Functions - Layer Control
-// ----------------------------------------
-
-
-// Do things when switching between layers
-// @Override
-layer_state_t layer_state_set_user(layer_state_t state) {
-	switch (get_highest_layer(state)) {
-		case 0:
-			g_layer_effect = NULL;
-			break;
-		case 1:
-			g_layer_effect = layer_rgb;
-			break;
-	}
-
-	set_layer_color();
-
-	return state;
 }
